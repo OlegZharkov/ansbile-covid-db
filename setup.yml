@@ -1,0 +1,45 @@
+- hosts: all
+  vars_files:
+   - vars/main.yml
+  remote_user: "{{ delivery_user_name }}"
+  become: true
+  tasks:
+    - include_role:
+        name: geerlingguy.docker
+        
+    - name: Install unzip
+      yum:
+        name: unzip
+        state: latest
+        
+    - name: Extract archive
+      unarchive:
+       src: data.zip
+       dest: "/home/{{ delivery_user_name }}/"
+       
+    - name: copy init.sql 
+      copy:
+       src: files/init.sql
+       dest: "/home/{{ delivery_user_name }}/"
+    - name: Make sure destination dir exists
+      file:
+        path: "{{ service_path }}"
+        state: directory
+        
+    - name: copy init.sql 
+      copy:
+       src: files/docker-compose.yml
+       dest: "{{ service_path }}"
+
+    - name: copy files
+      copy:
+       src: files/docker-compose@.service
+       dest: "/etc/systemd/system/"
+       
+    - name: enable docker-compose service
+      ansible.builtin.systemd:
+       name: docker-compose@coviddbservice
+       enabled: yes
+       state: started
+       daemon_reload: yes
+       masked: no

@@ -1,0 +1,26 @@
+version: '3'
+services:
+  server:
+    image: postgrest/postgrest
+    container_name: rest
+    ports:
+      - "80:3000"
+    links:
+      - db:db
+    environment:
+      PGRST_DB_URI: postgres://authenticator:pangolinsecretpassword@db:5432/postgres
+      PGRST_DB_SCHEMA: api
+      PGRST_DB_ANON_ROLE: web_anon
+      PGRST_SERVER_PROXY_URI: "http://127.0.0.1:3000"
+    depends_on:
+      - db
+  db:
+    image: postgres
+    container_name: postgres
+    ports:
+      - "8080:5432"
+    environment:
+      POSTGRES_PASSWORD: pangolinsecretpassword
+    volumes:
+      - "/home/centos/all_pangolin_reworked.tsv:/tmp/all_pangolin_reworked.tsv"
+      - "/home/centos/init.sql:/docker-entrypoint-initdb.d/init.sql"

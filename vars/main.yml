@@ -1,0 +1,6 @@
+delivery_user_name: centos
+service_path: /etc/docker/compose/coviddbservice
+
+# geerlingguy.docker
+docker_install_compose: true
+docker_compose_path: /usr/local/bin/docker-compose
