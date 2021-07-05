@@ -1,6 +1,11 @@
 delivery_user_name: centos
-service_path: /etc/docker/compose/coviddbservice
+service_path: /home/centos
+data_path: /home/centos/data
 
 # geerlingguy.docker
 docker_install_compose: true
 docker_compose_path: /usr/local/bin/docker-compose
+
+# certbot
+certbot_domains: coviddb.galaxyproject.eu
+certbot_admin_email: security@usegalaxy.eu

@@ -4,7 +4,7 @@ services:
     image: postgrest/postgrest
     container_name: rest
     ports:
-      - "80:3000"
+      - "3000:3000"
     links:
       - db:db
     environment:
@@ -18,9 +18,25 @@ services:
     image: postgres
     container_name: postgres
     ports:
-      - "8080:5432"
+      - "5432:5432"
     environment:
       POSTGRES_PASSWORD: pangolinsecretpassword
     volumes:
-      - "/home/centos/all_pangolin_reworked.tsv:/tmp/all_pangolin_reworked.tsv"
-      - "/home/centos/init.sql:/docker-entrypoint-initdb.d/init.sql"
+      - "/home/centos/data/all_pangolin_reworked.tsv:/tmp/all_pangolin_reworked.tsv"
+      - "/home/centos/data/init.sql:/docker-entrypoint-initdb.d/init.sql"
+  nginx:
+    image: nginx:1.15-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /home/centos/data/nginx:/etc/nginx/conf.d
+      - /home/centos/data/certbot/conf:/etc/letsencrypt
+      - /home/centos/data/certbot/www:/var/www/certbot
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - /home/centos/data/certbot/conf:/etc/letsencrypt
+      - /home/centos/data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
