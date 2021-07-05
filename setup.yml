@@ -28,11 +28,15 @@
       loop:
         - "{{ data_path }}"
         - "{{ data_path }}/nginx"
+        - "{{ data_path }}/nginx/conf.d"
 
     - name: Copy nginx conf
       ansible.builtin.copy:
-        src: app.conf
-        dest: "{{ data_path }}/nginx/app.conf"
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      loop:
+        - { 'src': app.conf, 'dest': "{{ data_path }}/nginx/conf.d" }
+        - { 'src': nginx.conf, 'dest': "{{ data_path }}/nginx" }
 
     - name: Copy init-letsencrypt
       ansible.builtin.template:
