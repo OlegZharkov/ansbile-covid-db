@@ -1,45 +1,77 @@
-- hosts: all
+- hosts: coviddb
   vars_files:
    - vars/main.yml
-  remote_user: "{{ delivery_user_name }}"
-  become: true
+
+  post_tasks:
+    - user:
+        name: centos
+        groups: docker
+        append: yes
+      become: true
+
+  roles:
+    - role: geerlingguy.docker
+      become: true
+
   tasks:
-    - include_role:
-        name: geerlingguy.docker
-        
     - name: Install unzip
-      yum:
+      ansible.builtin.package:
         name: unzip
         state: latest
+      become: true
+
+    - name: Create data directory if it does not exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ data_path }}"
+        - "{{ data_path }}/nginx"
+
+    - name: Copy nginx conf
+      ansible.builtin.copy:
+        src: app.conf
+        dest: "{{ data_path }}/nginx/app.conf"
+
+    - name: Copy init-letsencrypt
+      ansible.builtin.template:
+        src: init-letsencrypt.sh.j2
+        dest: "{{ service_path }}/init-letsencrypt.sh"
+        mode: '0755'
         
     - name: Extract archive
-      unarchive:
+      ansible.builtin.unarchive:
        src: data.zip
-       dest: "/home/{{ delivery_user_name }}/"
+       dest: "{{ data_path }}"
+      ignore_errors: yes
        
     - name: copy init.sql 
-      copy:
-       src: files/init.sql
-       dest: "/home/{{ delivery_user_name }}/"
+      ansible.builtin.copy:
+       src: init.sql
+       dest: "{{ data_path }}/init.sql"
+
     - name: Make sure destination dir exists
-      file:
+      ansible.builtin.file:
         path: "{{ service_path }}"
         state: directory
         
-    - name: copy init.sql 
-      copy:
-       src: files/docker-compose.yml
+    - name: copy docker-compose.yml
+      ansible.builtin.copy:
+       src: docker-compose.yml
        dest: "{{ service_path }}"
 
-    - name: copy files
-      copy:
-       src: files/docker-compose@.service
-       dest: "/etc/systemd/system/"
+    - name: copy service file
+      ansible.builtin.template:
+       src: coviddb.service.j2
+       dest: "/etc/systemd/system/coviddb.service"
+      become: true
        
     - name: enable docker-compose service
       ansible.builtin.systemd:
-       name: docker-compose@coviddbservice
+       name: coviddb.service
        enabled: yes
        state: started
        daemon_reload: yes
        masked: no
+      become: true
