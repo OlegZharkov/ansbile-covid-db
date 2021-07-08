@@ -44,15 +44,20 @@
         dest: "{{ service_path }}/init-letsencrypt.sh"
         mode: '0755'
         
-    - name: Extract archive
-      ansible.builtin.unarchive:
-       src: data.zip
+    - name: get table data
+      ansible.builtin.get_url:
+       src: ftp://xfer13.crg.eu/gx-observable.zip
        dest: "{{ data_path }}"
-      ignore_errors: yes
-       
-    - name: copy init.sql 
-      ansible.builtin.copy:
-       src: init.sql
+
+    - name: unarchive table data
+      ansible.builtin.unarchive:
+        src:  "{{ data_path }}/gx-observable.zip"
+        dest: "{{ data_path }}"
+        remote_src: True
+
+    - name: copy init.sql
+      ansible.builtin.get_url:
+       src: ftp://xfer13.crg.eu/init.sql
        dest: "{{ data_path }}/init.sql"
 
     - name: Make sure destination dir exists

@@ -24,7 +24,7 @@ services:
       POSTGRES_USER: app_user
       POSTGRES_PASSWORD: pangolinsecretpassword
     volumes:
-      - "/home/centos/data/all_pangolin_reworked.tsv:/tmp/all_pangolin_reworked.tsv"
+      - "/home/centos/data/data.tsv:/tmp/data.tsv"
       - "/home/centos/data/init.sql:/docker-entrypoint-initdb.d/init.sql"
   nginx:
     image: nginx:1.20
