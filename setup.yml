@@ -46,7 +46,7 @@
         
     - name: get table data
       ansible.builtin.get_url:
-       src: ftp://xfer13.crg.eu/gx-observable.zip
+       url: ftp://xfer13.crg.eu/gx-observable.zip
        dest: "{{ data_path }}"
 
     - name: unarchive table data
@@ -57,7 +57,7 @@
 
     - name: copy init.sql
       ansible.builtin.get_url:
-       src: ftp://xfer13.crg.eu/init.sql
+       url: ftp://xfer13.crg.eu/init.sql
        dest: "{{ data_path }}/init.sql"
 
     - name: Make sure destination dir exists
