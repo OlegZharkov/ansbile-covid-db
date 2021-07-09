@@ -80,7 +80,7 @@
       ansible.builtin.systemd:
        name: coviddb.service
        enabled: yes
-       state: started
+       state: restarted
        daemon_reload: yes
        masked: no
       become: true
