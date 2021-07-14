@@ -7,7 +7,7 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=true
 WorkingDirectory={{ service_path }}/%i
-ExecStart=/usr/local/bin/docker-compose up -d --remove-orphans
+ExecStart=/usr/local/bin/docker-compose up -d --remove-orphans --volumes
 ExecStop=/usr/local/bin/docker-compose down
 
 [Install]
