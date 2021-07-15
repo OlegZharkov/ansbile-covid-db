@@ -56,8 +56,8 @@
         remote_src: True
 
     - name: copy init.sql
-      ansible.builtin.get_url:
-       url: ftp://xfer13.crg.eu/init.sql
+      ansible.builtin.copy:
+       src: init.sql
        dest: "{{ data_path }}/init.sql"
 
     - name: Make sure destination dir exists
