@@ -17,10 +17,11 @@ GROUP BY
 $$ LANGUAGE SQL IMMUTABLE;
    
    
-CREATE FUNCTION api.average_af(input_POS integer, input_REF varchar, input_ALT varchar, start_collection_date date, end_collection_date date) RETURNS TABLE(collection_date date, AVG FLOAT) AS $$    
+CREATE OR REPLACE FUNCTION api.average_af(input_POS integer, input_REF varchar, input_ALT varchar, start_collection_date date, end_collection_date date) RETURNS TABLE(collection_date date, AVG FLOAT, count int) AS $$    
 SELECT
    collection_date,
-   AVG(AF) 
+   AVG(AF),
+   COUNT(POS)
 FROM
    api.isolates 
 WHERE
