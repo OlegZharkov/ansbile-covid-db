@@ -1,5 +1,5 @@
 create schema api;
-CREATE TABLE api.isolates (Sample VARCHAR, collection_date DATE, completed_date DATE, pango_lineage VARCHAR, scorpio_call VARCHAR, POS SMALLINT, REF VARCHAR, ALT VARCHAR, EFFECT VARCHAR, CODON VARCHAR, TRID VARCHAR, AA VARCHAR, AF FLOAT);
+CREATE TABLE api.isolates (Sample VARCHAR, study_accession VARCHAR, collection_date DATE, completed_date DATE, pango_lineage VARCHAR, scorpio_call VARCHAR, POS SMALLINT, REF VARCHAR, ALT VARCHAR, EFFECT VARCHAR, CODON VARCHAR, TRID VARCHAR, AA VARCHAR, AF FLOAT);
 COPY api.isolates FROM '/tmp/data.tsv' DELIMITER E'	';
 
 
