@@ -59,6 +59,8 @@ $func$  LANGUAGE plpgsql IMMUTABLE;
 CREATE VIEW api.get_boundary_dates AS
   SELECT min(collection_date), max(collection_date)  FROM api.isolates;
 
+CREATE INDEX isolates_index ON api.isolates(sample, pos, ref, alt, collection_date, af);
+
 CREATE role web_anon nologin;
 GRANT SELECT ON ALL TABLES IN SCHEMA api TO web_anon;
 GRANT ALL ON ALL functions IN schema api TO web_anon;
