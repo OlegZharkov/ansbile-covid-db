@@ -66,11 +66,11 @@ SELECT COUNT(*) INTO unique_samples_count FROM api.get_distinct_sample WHERE
          collection_date >= start_collection_date 
          AND collection_date <= end_collection_date;
 		 
-SELECT ROUND(CAST( count(*) / unique_samples_count::float  AS numeric), 2) INTO av_per_sample FROM api.isolates where collection_date >= start_collection_date AND collection_date <= end_collection_date;
-SELECT ROUND(CAST( count(*) / unique_samples_count::float  AS numeric), 2) INTO bottom_av_per_sample FROM api.isolates where af <= bottom_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
-SELECT ROUND(CAST( count(*) / unique_samples_count::float  AS numeric), 2) INTO top_av_per_sample FROM api.isolates where af >= top_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
-SELECT ROUND(CAST( count(*) / unique_samples_count::float  AS numeric), 2) INTO mean_syn FROM (SELECT effect  from api.isolates where effect = 'SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
-SELECT ROUND(CAST( count(*) / unique_samples_count::float  AS numeric), 2) INTO mean_non_syn FROM (SELECT effect  from api.isolates where effect = 'NON_SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
+SELECT COUNT(*) INTO av_per_sample FROM api.isolates where collection_date >= start_collection_date AND collection_date <= end_collection_date;
+SELECT COUNT(*) INTO bottom_av_per_sample FROM api.isolates where af <= bottom_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
+SELECT COUNT(*) INTO top_av_per_sample FROM api.isolates where af >= top_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
+SELECT COUNT(*) INTO mean_syn FROM (SELECT effect  from api.isolates where effect = 'SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
+SELECT COUNT(*) INTO mean_non_syn FROM (SELECT effect  from api.isolates where effect = 'NON_SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
 SELECT COUNT(*) INTO unique_av FROM(SELECT distinct pos, ref, alt FROM api.get_variatns WHERE collection_date >= start_collection_date AND collection_date <= end_collection_date) AS f;
 
 END
