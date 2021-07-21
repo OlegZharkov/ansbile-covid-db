@@ -22,7 +22,7 @@ CREATE MATERIALIZED VIEW api.get_boundary_dates AS
   SELECT min(collection_date), max(collection_date)  FROM api.isolates;
  
 CREATE MATERIALIZED VIEW api.get_variatns AS 
-  SELECT distinct on (pos, ref, alt) pos, ref, alt, collection_date FROM api.isolates
+  SELECT distinct on (pos, ref, alt) pos, ref, alt, collection_date FROM api.isolates;
 
 
 -- create funcions
