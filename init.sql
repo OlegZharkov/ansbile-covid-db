@@ -1,8 +1,31 @@
+-- create isolates table
 create schema api;
 CREATE TABLE api.isolates (Sample VARCHAR, study_accession VARCHAR, collection_date DATE, completed_date DATE, pango_lineage VARCHAR, scorpio_call VARCHAR, POS SMALLINT, REF VARCHAR, ALT VARCHAR, EFFECT VARCHAR, CODON VARCHAR, TRID VARCHAR, AA VARCHAR, AF FLOAT);
 COPY api.isolates FROM '/tmp/data.tsv' DELIMITER E'	';
 
+-- create indexes
+CREATE INDEX isolate_sample ON api.isolates(sample);
+CREATE INDEX isolate_pos ON api.isolates(pos);
+CREATE INDEX isolate_ref ON api.isolates(ref);
+CREATE INDEX isolate_alt ON api.isolates(alt);
+CREATE INDEX isolate_effect ON api.isolates(effect);
+CREATE INDEX isolate_collection_date ON api.isolates(collection_date);
+CREATE INDEX isolate_af ON api.isolates(af);
+CREATE INDEX isolates_index ON api.isolates(sample, pos, ref, alt, collection_date, af);
 
+-- create views
+CREATE MATERIALIZED VIEW api.get_distinct_sample AS
+  SELECT distinct on(sample) sample, collection_date, pango_lineage, completed_date, scorpio_call FROM api.isolates;
+  
+
+CREATE MATERIALIZED VIEW api.get_boundary_dates AS
+  SELECT min(collection_date), max(collection_date)  FROM api.isolates;
+ 
+CREATE MATERIALIZED VIEW api.get_variatns AS 
+  SELECT distinct on (pos, ref, alt) pos, ref, alt, collection_date FROM api.isolates
+
+
+-- create funcions
 CREATE FUNCTION api.count_pos_during_period(start_collection_date date, end_collection_date date) RETURNS TABLE(collection_date date, count integer) AS $$ 
 SELECT
    collection_date,
@@ -16,20 +39,7 @@ GROUP BY
    collection_date;
 $$ LANGUAGE SQL IMMUTABLE;
 
-CREATE INDEX isolate_sample ON api.isolates(sample);
-CREATE INDEX isolate_pos ON api.isolates(pos);
-CREATE INDEX isolate_ref ON api.isolates(ref);
-CREATE INDEX isolate_alt ON api.isolates(alt);
-CREATE INDEX isolate_effect ON api.isolates(effect);
-CREATE INDEX isolate_collection_date ON api.isolates(collection_date);
-CREATE INDEX isolate_af ON api.isolates(af);
 
-CREATE MATERIALIZED VIEW api.get_distinct_sample AS
-  SELECT distinct on(sample) sample, collection_date, pango_lineage, completed_date, scorpio_call FROM api.isolates;
-  
-
-CREATE MATERIALIZED VIEW api.get_boundary_dates AS
-  SELECT min(collection_date), max(collection_date)  FROM api.isolates;
 
 CREATE OR REPLACE FUNCTION api.average_af(input_POS integer, input_REF varchar, input_ALT varchar, start_collection_date date, end_collection_date date) RETURNS TABLE(collection_date date, AVG FLOAT, count int) AS $$    
 SELECT
@@ -61,13 +71,13 @@ SELECT ROUND(CAST( count(*) / unique_samples_count::float  AS numeric), 2) INTO 
 SELECT ROUND(CAST( count(*) / unique_samples_count::float  AS numeric), 2) INTO top_av_per_sample FROM api.isolates where af >= top_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
 SELECT ROUND(CAST( count(*) / unique_samples_count::float  AS numeric), 2) INTO mean_syn FROM (SELECT effect  from api.isolates where effect = 'SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
 SELECT ROUND(CAST( count(*) / unique_samples_count::float  AS numeric), 2) INTO mean_non_syn FROM (SELECT effect  from api.isolates where effect = 'NON_SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
-SELECT COUNT(*) INTO unique_av FROM(SELECT distinct pos, ref, alt FROM api.isolates WHERE collection_date >= start_collection_date AND collection_date <= end_collection_date) AS f;
+SELECT COUNT(*) INTO unique_av FROM(SELECT distinct pos, ref, alt FROM api.get_variatns WHERE collection_date >= start_collection_date AND collection_date <= end_collection_date) AS f;
 
 END
 $func$  LANGUAGE plpgsql IMMUTABLE;
 
-CREATE INDEX isolates_index ON api.isolates(sample, pos, ref, alt, collection_date, af);
 
+-- grant rest aceess to tables, views and functions
 CREATE role web_anon nologin;
 GRANT SELECT ON ALL TABLES IN SCHEMA api TO web_anon;
 GRANT ALL ON ALL functions IN schema api TO web_anon;
