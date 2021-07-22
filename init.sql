@@ -14,15 +14,18 @@ CREATE INDEX isolate_af ON api.isolates(af);
 CREATE INDEX isolates_index ON api.isolates(sample, pos, ref, alt, collection_date, af);
 
 -- create views
+CREATE MATERIALIZED VIEW api.get_study_accession AS
+  SELECT DISTINCT study_accession from api.isolates;
+
 CREATE MATERIALIZED VIEW api.get_distinct_sample AS
-  SELECT distinct on(sample) sample, collection_date, pango_lineage, completed_date, scorpio_call FROM api.isolates;
+  SELECT DISTINCT on(sample) sample, collection_date, pango_lineage, completed_date, scorpio_call FROM api.isolates;
   
 
 CREATE MATERIALIZED VIEW api.get_boundary_dates AS
   SELECT min(collection_date), max(collection_date)  FROM api.isolates;
  
 CREATE MATERIALIZED VIEW api.get_variatns AS 
-  SELECT distinct on (pos, ref, alt) pos, ref, alt, collection_date FROM api.isolates;
+  SELECT DISTINCT on (pos, ref, alt) pos, ref, alt, collection_date FROM api.isolates;
 
 
 -- create funcions
@@ -71,7 +74,7 @@ SELECT COUNT(*) INTO bottom_av_per_sample FROM api.isolates where af <= bottom_a
 SELECT COUNT(*) INTO top_av_per_sample FROM api.isolates where af >= top_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
 SELECT COUNT(*) INTO mean_syn FROM (SELECT effect  from api.isolates where effect = 'SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
 SELECT COUNT(*) INTO mean_non_syn FROM (SELECT effect  from api.isolates where effect = 'NON_SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
-SELECT COUNT(*) INTO unique_av FROM(SELECT distinct pos, ref, alt FROM api.get_variatns WHERE collection_date >= start_collection_date AND collection_date <= end_collection_date) AS f;
+SELECT COUNT(*) INTO unique_av FROM(SELECT DISTINCT pos, ref, alt FROM api.get_variatns WHERE collection_date >= start_collection_date AND collection_date <= end_collection_date) AS f;
 
 END
 $func$  LANGUAGE plpgsql IMMUTABLE;
