@@ -17,19 +17,17 @@ CREATE INDEX isolates_index ON api.isolates(sample, pos, ref, alt, collection_da
 CREATE MATERIALIZED VIEW api.get_study_accession AS
   SELECT DISTINCT study_accession from api.isolates;
 
-CREATE MATERIALIZED VIEW api.get_distinct_sample AS
-  SELECT DISTINCT on(sample) sample, collection_date, pango_lineage, completed_date, scorpio_call FROM api.isolates;
-  
-
 CREATE MATERIALIZED VIEW api.get_boundary_dates AS
   SELECT min(collection_date), max(collection_date)  FROM api.isolates;
+  
+CREATE MATERIALIZED VIEW api.get_distinct_sample AS
+  SELECT DISTINCT on(sample) sample, collection_date, pango_lineage, completed_date, scorpio_call, study_accession FROM api.isolates;
  
 CREATE MATERIALIZED VIEW api.get_variatns AS 
-  SELECT DISTINCT on (pos, ref, alt) pos, ref, alt, collection_date FROM api.isolates;
-
+  SELECT DISTINCT on (pos, ref, alt) pos, ref, alt, study_accession, collection_date FROM api.isolates;
 
 -- create funcions
-CREATE FUNCTION api.count_pos_during_period(start_collection_date date, end_collection_date date) RETURNS TABLE(collection_date date, count integer) AS $$ 
+CREATE OR REPLACE FUNCTION api.count_pos_during_period(start_collection_date date, end_collection_date date, input_study_accession varchar) RETURNS TABLE(collection_date date, count integer) AS $$ 
 SELECT
    collection_date,
    COUNT(POS) 
@@ -38,13 +36,12 @@ FROM
 WHERE
    collection_date >= start_collection_date 
    AND collection_date <= end_collection_date 
+   AND study_accession = input_study_accession
 GROUP BY
    collection_date;
 $$ LANGUAGE SQL IMMUTABLE;
 
-
-
-CREATE OR REPLACE FUNCTION api.average_af(input_POS integer, input_REF varchar, input_ALT varchar, start_collection_date date, end_collection_date date) RETURNS TABLE(collection_date date, AVG FLOAT, count int) AS $$    
+CREATE OR REPLACE FUNCTION api.average_af(input_POS integer, input_REF varchar, input_ALT varchar, input_study_accession varchar, start_collection_date date, end_collection_date date) RETURNS TABLE(collection_date date, AVG FLOAT, count int) AS $$    
 SELECT
    collection_date,
    AVG(AF),
@@ -57,24 +54,24 @@ WHERE
    AND POS = input_POS 
    AND REF = input_REF 
    AND ALT = input_ALT 
+   AND study_accession = input_study_accession
 GROUP BY
    collection_date;
 $$ LANGUAGE SQL IMMUTABLE;
 
-
-CREATE OR REPLACE FUNCTION api.get_analyzed_samples(start_collection_date date, end_collection_date date, top_af_threshold float, bottom_af_threshold float, OUT unique_samples_count int, OUT av_per_sample float, OUT top_av_per_sample float, OUT bottom_av_per_sample float, OUT unique_av integer, OUT mean_non_syn float, OUT mean_syn float) AS 
+CREATE OR REPLACE FUNCTION api.get_analyzed_samples(start_collection_date date, end_collection_date date, top_af_threshold float, bottom_af_threshold float, input_study_accession varchar, OUT unique_samples_count int, OUT av_per_sample float, OUT top_av_per_sample float, OUT bottom_av_per_sample float, OUT unique_av integer, OUT mean_non_syn float, OUT mean_syn float) AS 
 $func$
 BEGIN
 SELECT COUNT(*) INTO unique_samples_count FROM api.get_distinct_sample WHERE
          collection_date >= start_collection_date 
          AND collection_date <= end_collection_date;
 		 
-SELECT COUNT(*) INTO av_per_sample FROM api.isolates where collection_date >= start_collection_date AND collection_date <= end_collection_date;
-SELECT COUNT(*) INTO bottom_av_per_sample FROM api.isolates where af <= bottom_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
-SELECT COUNT(*) INTO top_av_per_sample FROM api.isolates where af >= top_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
-SELECT COUNT(*) INTO mean_syn FROM (SELECT effect  from api.isolates where effect = 'SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
-SELECT COUNT(*) INTO mean_non_syn FROM (SELECT effect  from api.isolates where effect = 'NON_SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) as f;
-SELECT COUNT(*) INTO unique_av FROM(SELECT DISTINCT pos, ref, alt FROM api.get_variatns WHERE collection_date >= start_collection_date AND collection_date <= end_collection_date) AS f;
+SELECT COUNT(*) INTO av_per_sample FROM api.isolates WHERE study_accession = input_study_accession AND collection_date >= start_collection_date AND collection_date <= end_collection_date;
+SELECT COUNT(*) INTO bottom_av_per_sample FROM api.isolates WHERE study_accession = input_study_accession AND af <= bottom_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
+SELECT COUNT(*) INTO top_av_per_sample FROM api.isolates WHERE study_accession = input_study_accession AND af >= top_af_threshold and collection_date >= start_collection_date AND collection_date <= end_collection_date;
+SELECT COUNT(*) INTO mean_syn FROM (SELECT effect  FROM api.isolates WHERE study_accession = input_study_accession AND effect = 'SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) AS f;
+SELECT COUNT(*) INTO mean_non_syn FROM (SELECT effect FROM api.isolates WHERE study_accession = input_study_accession AND effect = 'NON_SYNONYMOUS_CODING' and collection_date >= start_collection_date AND collection_date <= end_collection_date) AS f;
+SELECT COUNT(*) INTO unique_av FROM(SELECT DISTINCT pos, ref, alt FROM api.get_variatns WHERE study_accession = input_study_accession AND collection_date >= start_collection_date AND collection_date <= end_collection_date) AS f;
 
 END
 $func$  LANGUAGE plpgsql IMMUTABLE;
